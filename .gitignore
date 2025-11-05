@@ -1,0 +1,12 @@
+# Large data files
+*.RData
+*.dta
+
+# Log files
+*.log
+
+# Large datasets
+merged_waves_recoded.*
+merged_sc_pa_fscores.*
+sc_wave_fscores_complete.*
+Parenting_FS_all.dat
