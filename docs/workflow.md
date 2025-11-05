@@ -271,16 +271,280 @@ After Phase 0 completes:
 1. **Review quality checks**: `results/quality_checks/`
 2. **Check dataset summary**: `data/processed/dataset_summary.csv`
 3. **Choose appropriate dataset** for your analysis
-4. **Proceed to Phase 1**: Measurement models
+4. **Proceed to Phase 1**: Enhanced Analyses (NEW) or Original Pipeline
 
 ```r
-# Continue to measurement models
+# Option A: Run Phase 1 enhanced analyses (RECOMMENDED)
+source("R/enhanced_analyses/01_extract_growth_parameters.R")
+
+# Option B: Run original pipeline
 source("R/01_measurement.R")
 ```
 
 ---
 
-## Data Preparation
+## Phase 1: Enhanced Analyses (NEW)
+
+**RECOMMENDED APPROACH**: This phase implements multiple complementary strategies to address the robust null finding from the original analysis.
+
+### Overview
+
+Phase 1 provides **increased statistical power** through:
+- Larger sample sizes (N~3,000 vs N=917)
+- Simpler models (1 outcome vs 42 indicators)
+- Multiple analytical perspectives
+- Theory-driven hypothesis testing
+
+**Runtime**: ~40-50 minutes total
+**Input**: Phase 0 output datasets
+**Output**: Multiple SEMTree results + synthesis
+
+### Why Phase 1?
+
+**Original Finding**: No splits found across 151 SEMTree analyses (N=917)
+
+**Phase 1 Innovations**:
+1. **Two-stage approach**: Extract growth parameters first, then split on simpler models
+2. **Time-specific analysis**: Cross-sectional trees at each age (larger N per analysis)
+3. **Theory-driven moderation**: Test specific theoretical hypotheses
+4. **Regression benchmarking**: Detect small effects SEMTree may miss
+5. **Cross-method validation**: Convergent findings = robust conclusions
+
+### Quick Start
+
+**Run all Phase 1 analyses**:
+```r
+# Extract growth parameters first (required for all subsequent analyses)
+source("R/enhanced_analyses/01_extract_growth_parameters.R")
+
+# Regression analysis (baseline for comparison)
+source("R/enhanced_analyses/02_regression_growth_params.R")
+
+# Two-stage SEMTree
+source("R/enhanced_analyses/03_semtree_intercept.R")
+source("R/enhanced_analyses/04_semtree_slope.R")
+
+# Time-specific cross-sectional analysis
+source("R/enhanced_analyses/05_semtree_timespecific.R")
+
+# Theory-driven moderation
+source("R/enhanced_analyses/06_semtree_moderation.R")
+
+# Synthesis and comparison
+source("R/enhanced_analyses/07_compare_results.R")
+```
+
+### Script Descriptions
+
+#### 01_extract_growth_parameters.R
+**Purpose**: Extract individual-level intercept (i) and slope (s) from LGBM
+
+**What it does**:
+- Fits second-order latent growth basis model (6 waves, 42 indicators)
+- Extracts factor scores for growth parameters
+- Computes standard errors and confidence intervals
+- Merges with covariates
+
+**Key output**: `data/processed/growth_parameters_with_covariates.RData`
+
+**Runtime**: 5-10 minutes
+
+**Why this matters**: Simplifies outcome from 42 ordinal indicators → 2 continuous growth parameters = more power
+
+---
+
+#### 02_regression_growth_params.R
+**Purpose**: Regression analysis predicting intercept and slope
+
+**What it does**:
+- Tests baseline covariates
+- Adds parenting variables incrementally
+- Tests interactions (SES × harsh, sex × positive)
+- Creates coefficient plots
+
+**Key outputs**:
+- `results/tables/regression_summary.csv`
+- `results/figures/regression_coef_intercept.pdf`
+
+**Runtime**: 1-2 minutes
+
+**Why this matters**: Regression has more power for small linear effects than SEMTree
+
+---
+
+#### 03_semtree_intercept.R
+**Purpose**: Two-stage SEMTree on intercept (initial SC level)
+
+**What it does**:
+- Simple SEM model: `i ~ 1; i ~~ i` (mean and variance)
+- Standard parameters (α=.05, min.N=100)
+- Relaxed parameters (α=.10, min.N=50) for sensitivity
+- If splits found: runs SEMForest for variable importance
+
+**Key outputs**:
+- `results/models/semtree_intercept_standard.RData`
+- `results/figures/semtree_intercept_standard.pdf`
+
+**Runtime**: 3-5 minutes
+
+**Research question**: Do covariates predict who starts HIGH vs LOW?
+
+---
+
+#### 04_semtree_slope.R
+**Purpose**: Two-stage SEMTree on slope (rate of change)
+
+**What it does**:
+- Simple SEM model: `s ~ 1; s ~~ s`
+- Standard and relaxed parameters
+- If splits found: runs SEMForest
+
+**Key outputs**:
+- `results/models/semtree_slope_standard.RData`
+- `results/figures/semtree_slope_standard.pdf`
+
+**Runtime**: 3-5 minutes
+
+**Research question**: Do covariates predict who IMPROVES vs DECLINES faster?
+
+---
+
+#### 05_semtree_timespecific.R
+**Purpose**: Cross-sectional SEMTree at each developmental stage
+
+**What it does**:
+- Loops through ages 3, 5, 7, 11, 14, 17
+- Uses wave-specific SC factor scores
+- Identifies age-specific subgroups
+- Creates developmental summary
+
+**Key outputs**:
+- Individual trees: `results/models/semtree_age3.RData` ... `semtree_age17.RData`
+- Summary: `results/tables/timespecific_semtree_summary.csv`
+- Trajectory plot with splits marked
+
+**Runtime**: 10-15 minutes
+
+**Research questions**:
+- Do different covariates matter at different ages?
+- Are there critical developmental periods?
+- Do subgroups emerge at certain stages?
+
+---
+
+#### 06_semtree_moderation.R
+**Purpose**: Theory-driven moderation hypothesis testing
+
+**Tests 5 theoretical hypotheses**:
+1. **H1**: SES × Harsh Parenting (differential susceptibility)
+2. **H2**: Sex × Positive Parenting (differential effectiveness)
+3. **H3**: Cognitive × SES (compensatory effects)
+4. **H4**: Temperament × Harsh Parenting (diathesis-stress)
+5. **H5**: Cognitive × Harsh Parenting (protective factor)
+
+**What it does**:
+- For each hypothesis: tests moderation of intercept AND slope
+- Uses focused covariate sets (not all 47 covariates)
+- More power through hypothesis-driven approach
+
+**Key outputs**:
+- Individual models: `results/models/semtree_h1_ses_harsh_intercept.RData` etc.
+- Summary: `results/tables/moderation_semtree_summary.csv`
+- Heatmap visualization
+
+**Runtime**: 15-20 minutes
+
+**Why this matters**: Theory-driven approach has more power than exploratory
+
+---
+
+#### 07_compare_results.R
+**Purpose**: Synthesize findings across all Phase 1 approaches
+
+**What it does**:
+- Loads results from all previous scripts
+- Creates comprehensive comparison tables
+- Generates cross-method visualizations
+- Identifies convergent/divergent findings
+- Provides interpretation guide and recommendations
+
+**Key outputs**:
+- `results/synthesis/methods_comparison_summary.csv`
+- `results/synthesis/fig_methods_comparison.pdf`
+- `results/synthesis/fig_timespecific_trajectory.pdf`
+- `results/synthesis/fig_moderation_heatmap.pdf`
+
+**Runtime**: 1-2 minutes
+
+**Why this matters**: Cross-method convergence = robust conclusions
+
+---
+
+### Interpreting Phase 1 Results
+
+#### If ALL methods find NO effects (convergent null):
+**Interpretation**: Strong evidence for homogeneous self-control development
+- Universal prevention approaches supported
+- No need for complex risk stratification
+- Document as robust null finding (valuable!)
+
+**Next steps**:
+- Manuscript emphasizing homogeneity
+- Theoretical implications
+- Consider alternative unmeasured moderators
+
+---
+
+#### If SOME methods find effects (mixed):
+**Interpretation**: Method-specific insights
+- Regression finds small linear effects
+- SEMTree detects non-linear/interactions
+- Time-specific reveals critical periods
+
+**Next steps**:
+- Report all findings transparently
+- Discuss method differences
+- Consider replication in independent sample
+
+---
+
+#### If ALL methods find effects (convergent positive):
+**Interpretation**: Strong evidence for heterogeneous development
+- Targeted interventions justified
+- Identify key moderators
+- Characterize subgroups
+
+**Next steps**:
+- Quantify subgroup differences
+- Replicate findings
+- Develop screening tools
+- Design tailored interventions
+
+---
+
+### Comparison with Original Pipeline
+
+| Aspect | Original Pipeline | Phase 1 Enhanced |
+|--------|------------------|------------------|
+| Sample size | N=917 | N~3,000 |
+| Outcome complexity | 42 ordinal indicators | 1-2 continuous parameters |
+| Approaches | Single SEMTree | 6 complementary methods |
+| Power | Limited | Substantially increased |
+| Interpretation | Complex | Clearer, multiple angles |
+| Hypothesis testing | Exploratory | Theory-driven + exploratory |
+
+**Recommendation**: Run Phase 1 for comprehensive analysis. Original pipeline still valuable for comparison and specific needs.
+
+---
+
+### Phase 1 Complete Documentation
+
+For detailed implementation guide, see:
+- `docs/PHASE1_IMPLEMENTATION_SUMMARY.md`
+
+---
+
+## Data Preparation (Original Pipeline)
 
 ### Initial Data Processing
 
