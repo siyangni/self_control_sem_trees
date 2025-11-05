@@ -11,10 +11,11 @@
 ## Table of Contents
 
 1. [Setup & Prerequisites](#setup--prerequisites)
-2. [Data Preparation](#data-preparation)
-3. [Analysis Pipeline](#analysis-pipeline)
-4. [Quality Checks](#quality-checks)
-5. [Troubleshooting](#troubleshooting)
+2. [Phase 0: Data Ingestion & Harmonization](#phase-0-data-ingestion--harmonization) **(NEW)**
+3. [Data Preparation](#data-preparation)
+4. [Analysis Pipeline](#analysis-pipeline)
+5. [Quality Checks](#quality-checks)
+6. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -75,6 +76,206 @@ renv::restore()
 ```r
 library(here)
 setwd(here::here())  # Sets to project root
+```
+
+---
+
+## Phase 0: Data Ingestion & Harmonization
+
+**NEW WORKFLOW COMPONENT**: This phase creates analysis-ready datasets from raw MCS data files.
+
+### Overview
+
+Phase 0 transforms raw MCS Stata files into clean, harmonized datasets optimized for SEMTree and growth modeling analyses. This phase runs **once** before any statistical analyses.
+
+**Runtime**: ~10-20 minutes
+**Input**: Raw MCS data files (Waves 1-7)
+**Output**: Multiple analysis-ready datasets
+
+### Quick Start
+
+```r
+# Run complete data preparation pipeline
+source("R/data_prep/00_master_data_prep.R")
+```
+
+This single command executes all 11 steps of data preparation.
+
+### What Phase 0 Does
+
+1. **Extracts variables** from 7 waves of raw MCS data
+2. **Harmonizes variable names** across waves (consistent naming)
+3. **Merges all waves** by cohort member ID
+4. **Runs quality checks** (duplicates, ranges, temporal consistency)
+5. **Creates derived variables** (composites, risk indices, trajectory summaries)
+6. **Generates multiple datasets** optimized for different analyses
+
+### Output Datasets
+
+| Dataset | N | Purpose | Use For |
+|---------|---|---------|---------|
+| `mcs_merged_wide.RData` | ~18,000 | Full merged data | Exploration, descriptives |
+| `mcs_semtree_complete_full.RData` | ~900 | Complete case, all covariates | SEMTree (conservative) |
+| `mcs_semtree_complete_minimal.RData` | ~3,000 | Complete case, minimal covariates | SEMTree (max power) |
+| `mcs_semtree_complete_theory.RData` | ~2,000 | Complete case, theory covariates | SEMTree (focused) |
+| `mcs_lavaan_fiml.RData` | ~10,000 | ≥3 waves SC, complete baseline | LGBM with FIML |
+| `mcs_long_format.RData` | ~60,000 obs | Person-period format | Mixed models |
+
+### Step-by-Step Process
+
+If you prefer to run steps individually:
+
+```r
+# Step 1: Extract baseline covariates (Wave 1, 9 months)
+source("R/data_prep/00a_wave1_baseline.R")
+
+# Steps 2-7: Extract wave-specific data (ages 3-17)
+source("R/data_prep/00b_wave2_age3.R")   # Age 3
+source("R/data_prep/00c_wave3_age5.R")   # Age 5
+source("R/data_prep/00d_wave4_age7.R")   # Age 7
+source("R/data_prep/00e_wave5_age11.R")  # Age 11
+source("R/data_prep/00f_wave6_age14.R")  # Age 14
+source("R/data_prep/00g_wave7_age17.R")  # Age 17
+
+# Step 8: Merge all waves
+source("R/data_prep/00h_merge_all_waves.R")
+
+# Step 9: Quality checks
+source("R/data_prep/00i_quality_checks.R")
+
+# Step 10: Derived variables
+source("R/data_prep/00j_derive_composites.R")
+
+# Step 11: Create analysis datasets
+source("R/data_prep/00l_create_analysis_datasets.R")
+```
+
+### Variables Extracted
+
+**Self-Control (SDQ)**:
+- 7 core items consistent across all waves (ages 3-17)
+- 1 additional item "lying" (ages 5-17, not used for consistency)
+- Total scores, mean scores, item counts
+
+**Parenting**:
+- Harsh discipline (ages 3, 5, 7): smack, shout, tell off, etc.
+- Positive parenting (ages 5, 7): reason, praise, cuddle
+- Parental monitoring (ages 14, 17): parent and child reports
+
+**Baseline Covariates**:
+- Demographics: sex, ethnicity, birth outcomes
+- SES: maternal education, income, housing
+- Child: cognitive ability, temperament
+
+**Derived Variables**:
+- Time-averaged parenting composites
+- Parenting stability measures
+- Categorical groupings (tertiles)
+- Cumulative risk index
+- SC trajectory summaries
+
+See `docs/variable_reference.md` for complete variable list.
+
+### Quality Checks
+
+Phase 0 includes automated quality checks:
+
+- ✓ Duplicate ID detection
+- ✓ Value range validation (SC items 0-2)
+- ✓ Temporal consistency checks
+- ✓ Missing data patterns
+- ✓ Survey weight distributions
+
+**Check results**: `results/quality_checks/`
+
+### Covariate Sets
+
+Predefined covariate sets for different analyses:
+
+```r
+load("data/processed/covariate_lists.RData")
+
+# Available sets:
+# - covariate_lists$baseline      # Time-invariant covariates
+# - covariate_lists$parenting     # Parenting variables
+# - covariate_lists$all_full      # All covariates (47 variables)
+# - covariate_lists$minimal       # Minimal set (7 variables)
+# - covariate_lists$theory        # Theory-driven (8 variables)
+```
+
+### Choosing the Right Dataset
+
+**For SEMTree Analysis:**
+
+```r
+# Maximum sample size (recommended for initial analysis)
+load("data/processed/mcs_semtree_complete_minimal.RData")
+# N ~ 3,000, 7 covariates
+
+# Theory-driven covariates
+load("data/processed/mcs_semtree_complete_theory.RData")
+# N ~ 2,000, 8 covariates
+
+# All covariates (most complete information)
+load("data/processed/mcs_semtree_complete_full.RData")
+# N ~ 900, 47 covariates
+```
+
+**For Latent Growth Models:**
+
+```r
+# Lavaan with FIML (allows missing SC waves)
+load("data/processed/mcs_lavaan_fiml.RData")
+# N ~ 10,000, requires ≥3 waves of SC data
+```
+
+**For Mixed Models:**
+
+```r
+# Long format with time-varying structure
+load("data/processed/mcs_long_format.RData")
+# ~60,000 person-period observations
+```
+
+### Troubleshooting Phase 0
+
+**Error: "Cannot find raw data files"**
+```
+Solution: Ensure MCS data is in data/raw/MCS [1-7]/stata*/
+Check that you have downloaded all required waves
+```
+
+**Error: "Package not installed"**
+```r
+# Install required packages
+install.packages(c("tidyverse", "haven", "here", "naniar"))
+```
+
+**Warning: "Many missing values"**
+```
+This is expected due to attrition across waves
+Phase 0 handles missing data appropriately
+Multiple datasets created for different missingness patterns
+```
+
+**Want to re-run Phase 0?**
+```r
+# Safe - will overwrite previous output
+source("R/data_prep/00_master_data_prep.R")
+```
+
+### What's Next?
+
+After Phase 0 completes:
+
+1. **Review quality checks**: `results/quality_checks/`
+2. **Check dataset summary**: `data/processed/dataset_summary.csv`
+3. **Choose appropriate dataset** for your analysis
+4. **Proceed to Phase 1**: Measurement models
+
+```r
+# Continue to measurement models
+source("R/01_measurement.R")
 ```
 
 ---
