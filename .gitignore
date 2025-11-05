@@ -1,12 +1,254 @@
-# Large data files
-*.RData
-*.dta
+# =============================================================================
+# Git Ignore File
+# Self-Control Development Study
+# =============================================================================
+# This file specifies which files should NOT be tracked by git
+# Last Updated: November 2025
+# =============================================================================
 
-# Log files
-*.log
+# =============================================================================
+# DATA FILES (DO NOT COMMIT - Data Sharing Restrictions)
+# =============================================================================
 
-# Large datasets
+# Raw data
+data/raw/*.dta
+data/raw/*.RData
+data/raw/*.csv
+data/raw/*.sav
+
+# Processed data
+data/processed/*.RData
+data/processed/*.csv
+data/processed/*.dat
+data/processed/*.feather
+
+# Specific large datasets
 merged_waves_recoded.*
 merged_sc_pa_fscores.*
 sc_wave_fscores_complete.*
 Parenting_FS_all.dat
+
+# =============================================================================
+# RESULTS (Model objects only - figures/tables can be committed if small)
+# =============================================================================
+
+# Large model objects
+results/models/*.RData
+results/models/*.rds
+
+# Keep example outputs (uncomment to commit selected results)
+# !results/models/example_model.RData
+
+# Large tables
+results/tables/*.csv
+
+# Figures (remove this if you want to commit figures)
+results/figures/*.pdf
+results/figures/*.png
+results/figures/*.jpg
+results/figures/*.svg
+
+# Keep markdown reports (these are documentation)
+# !results/reports/*.md
+
+# =============================================================================
+# R ENVIRONMENT
+# =============================================================================
+
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+.RDataTmp
+
+# User-specific files
+.Ruserdata
+
+# RStudio files
+.Rproj.user/
+*.Rproj
+
+# OAuth2 token (if using)
+.httr-oauth
+
+# knitr and R markdown default cache directories
+*_cache/
+/cache/
+
+# Temporary files created by R markdown
+*.utf8.md
+*.knit.md
+
+# R Environment Variables
+.Renviron
+
+# pkgdown site
+docs/
+
+# =============================================================================
+# PACKAGE MANAGEMENT
+# =============================================================================
+
+# renv library (packages installed locally)
+renv/library/
+renv/local/
+renv/staging/
+
+# Keep renv configuration
+!renv/activate.R
+!renv/settings.dcf
+!renv.lock
+
+# Packrat (if using older package manager)
+packrat/lib*/
+packrat/src/
+
+# =============================================================================
+# LOGS AND TEMPORARY FILES
+# =============================================================================
+
+# Log files
+*.log
+*.out
+*.err
+
+# Temporary files
+*.tmp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backup files
+*.bak
+*backup*
+*old*
+
+# =============================================================================
+# MANUSCRIPT (may want to version control, but exclude large files)
+# =============================================================================
+
+# LaTeX
+manuscript/*.aux
+manuscript/*.bbl
+manuscript/*.blg
+manuscript/*.fdb_latexmk
+manuscript/*.fls
+manuscript/*.log
+manuscript/*.out
+manuscript/*.synctex.gz
+manuscript/*.toc
+
+# Word/Office temporary files
+manuscript/~$*.docx
+manuscript/*.tmp
+
+# Large PDFs (uncomment if needed)
+# manuscript/*.pdf
+
+# =============================================================================
+# DEVELOPMENT
+# =============================================================================
+
+# Python (if using Python alongside R)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# VS Code
+.vscode/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Atom
+.atom/
+
+# =============================================================================
+# OPERATING SYSTEM
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# =============================================================================
+# SECURITY (NEVER COMMIT THESE)
+# =============================================================================
+
+# API keys and credentials
+.env
+.env.local
+credentials.json
+secrets.json
+*.key
+*.pem
+
+# Personal notes that may contain sensitive info
+PRIVATE.md
+TODO_private.md
+notes_private.txt
+
+# =============================================================================
+# EXCEPTIONS (Files to ALWAYS track)
+# =============================================================================
+
+# Keep important config files
+!.gitignore
+!.Rprofile
+!DESCRIPTION
+!renv.lock
+
+# Keep documentation
+!README.md
+!LICENSE
+!CITATION.cff
+!CHANGELOG.md
+
+# Keep all markdown in docs/
+!docs/*.md
+
+# Keep reports
+!results/reports/*.md
+
+# =============================================================================
+# PROJECT-SPECIFIC
+# =============================================================================
+
+# Scratch/experimental scripts
+R/scratch/
+R/experimental/
+R/archive/
+
+# Test data (if any)
+data/test/
+
+# Personal analysis notes (if sensitive)
+notes/private/
+
+# =============================================================================
+# END OF .gitignore
+# =============================================================================
