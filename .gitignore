@@ -11,16 +11,16 @@
 # =============================================================================
 
 # Raw data
-data/raw/*.dta
-data/raw/*.RData
-data/raw/*.csv
-data/raw/*.sav
+#data/raw/*.dta
+#data/raw/*.RData
+#data/raw/*.csv
+#data/raw/*.sav
 
 # Processed data
-data/processed/*.RData
-data/processed/*.csv
-data/processed/*.dat
-data/processed/*.feather
+#data/processed/*.RData
+#data/processed/*.csv
+#data/processed/*.dat
+#data/processed/*.feather
 
 # Specific large datasets
 merged_waves_recoded.*
